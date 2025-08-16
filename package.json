@@ -1,0 +1,27 @@
+{
+  "name": "wa-aice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/app.ts",
+    "dev": "tsx src/app.ts",
+    "start:prod": "pnpm run build && node dist/app.js",
+    "clean": "rm -rf dist",
+    "clear-log": "rm -f sent_log.txt"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "csv-parser": "^3.2.0"
+  }
+}

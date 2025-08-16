@@ -26,8 +26,11 @@ class MessageProcessor {
   constructor(
     csvFilePath: string = "./data.csv",
     logFilePath: string = "./sent_log.txt",
-    messageTemplate: string = "Halo {1}, do you {2}?",
-    apiUrl: string = "https://api.example.com/send-message" // Replace with your actual API URL
+    messageTemplate: string = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi
+      Apakah benar pada bulan Juni toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor? 
+      Terimakasih atas konfirmasinya
+      Have an aice day!`,
+    apiUrl: string = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
   ) {
     this.csvFilePath = csvFilePath
     this.logFilePath = logFilePath
@@ -82,19 +85,16 @@ class MessageProcessor {
    */
   private parseMessage(template: string, name: string, value: string): string {
     const replacements: Record<string, string> = {
-      "{1}": name,
-      "{2}": value,
+      "[1]": name,
+      "[2]": value,
     }
 
-    return Object.keys(replacements).reduce((result, placeholder) => {
-      return result.replace(
-        new RegExp(
-          "\\" + placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-          "g"
-        ),
-        replacements[placeholder]
-      )
-    }, template)
+    return template.replace(
+      /\[(\d+)]/g,
+      (match, index) => {
+        return replacements[match]
+      }
+    )
   }
 
   /**
@@ -134,23 +134,28 @@ class MessageProcessor {
   ): Promise<boolean> {
     try {
       const payload = {
-        phoneNumber: processedMessage.phoneNumber,
+        appkey: "53c00974-5c61-47cd-aaa5-51604c37f5b9",
+        authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
+        to: processedMessage.phoneNumber,
         message: processedMessage.message,
-        name: processedMessage.name,
-        value: processedMessage.value,
       }
 
       // Replace with your actual API call
       const response = await axios.post(this.apiUrl, payload, {
         headers: {
           "Content-Type": "application/json",
-          // Add any required headers like authorization
-          // 'Authorization': 'Bearer your-token'
+          Accept: "application/json",
         },
         timeout: 10000, // 10 second timeout
       })
 
-      if (response.status >= 200 && response.status < 300) {
+      console.log("RES", response.status, response.data, payload, this.apiUrl)
+
+      if (
+        response.status >= 200 &&
+        response.status < 300 &&
+        isJson(response.data)
+      ) {
         console.log(
           `✅ Message sent to ${processedMessage.phoneNumber} (${processedMessage.name})`
         )
@@ -229,18 +234,18 @@ class MessageProcessor {
         console.log(`💬 Message: "${processedMessage.message}"`)
 
         // Send to API
-        const success = await this.sendToApi(processedMessage)
+        // const success = await this.sendToApi(processedMessage)
 
-        if (success) {
-          // Log successful send
-          this.logSentPhoneNumber(
-            processedMessage.phoneNumber,
-            processedMessage.name
-          )
-          successCount++
-        } else {
-          errorCount++
-        }
+        // if (success) {
+        //   // Log successful send
+        //   this.logSentPhoneNumber(
+        //     processedMessage.phoneNumber,
+        //     processedMessage.name
+        //   )
+        //   successCount++
+        // } else {
+        //   errorCount++
+        // }
 
         // Add delay between requests (except for the last one)
         if (i < csvData.length - 1) {
@@ -287,12 +292,7 @@ class MessageProcessor {
 
 // Main execution function
 async function main() {
-  const processor = new MessageProcessor(
-    "./data.csv", // CSV file path
-    "./sent_log.txt", // Log file path
-    "Halo {1}, do you {2}?", // Message template
-    "https://your-api-endpoint.com/send-message" // Replace with your actual API URL
-  )
+  const processor = new MessageProcessor()
 
   try {
     await processor.processMessages(1000) // 1 second delay between requests
@@ -300,6 +300,15 @@ async function main() {
     console.error("Application error:", error)
     process.exit(1)
   }
+}
+
+function isJson(str: unknown) {
+  try {
+    JSON.parse(String(str))
+  } catch (e) {
+    return false
+  }
+  return true
 }
 
 // Run if this file is executed directly

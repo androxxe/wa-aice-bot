@@ -149,12 +149,10 @@ class MessageProcessor {
         timeout: 10000, // 10 second timeout
       })
 
-      console.log("RES", response.status, response.data, payload, this.apiUrl)
-
       if (
         response.status >= 200 &&
         response.status < 300 &&
-        isJson(response.data)
+        isJson(JSON.stringify(response.data))
       ) {
         console.log(
           `✅ Message sent to ${processedMessage.phoneNumber} (${processedMessage.name})`

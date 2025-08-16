@@ -1,7 +1,7 @@
 import fs from "fs"
-import path from "path"
 import csv from "csv-parser"
 import axios from "axios"
+import nodeCron from 'node-cron';
 
 interface CsvRow {
   Name: string
@@ -26,10 +26,7 @@ class MessageProcessor {
   constructor(
     csvFilePath: string = "./data.csv",
     logFilePath: string = "./sent_log.txt",
-    messageTemplate: string = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi
-      Apakah benar pada bulan Juni toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor? 
-      Terimakasih atas konfirmasinya
-      Have an aice day!`,
+    messageTemplate: string = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi.\nApakah benar pada bulan Juni toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor?\n\nTerimakasih atas konfirmasinya, Have an aice day!`,
     apiUrl: string = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
   ) {
     this.csvFilePath = csvFilePath
@@ -278,8 +275,8 @@ class MessageProcessor {
 
         // Add delay between requests (except for the last one)
         if (i < dataToProcess.length - 1) {
-          console.log(`⏳ Waiting ${delayMs}ms...`)
-          await this.delay(delayMs)
+          console.log(`⏳ Waiting ${success ? delayMs : 1000}ms...`)
+          await this.delay(success ? delayMs : 1000)
         }
       }
 
@@ -350,7 +347,7 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processBatch(1, 5, 1000)
+    await processor.processBatch(3, 1000, 30000)
 
   } catch (error) {
     console.error("Application error:", error)
@@ -368,6 +365,17 @@ function isJson(str: unknown) {
 }
 
 // Run if this file is executed directly
-if (require.main === module) {
+// if (require.main === module) {
+//   main()
+// }
+
+console.log('[WA-AICE] worker is starting');
+
+nodeCron.schedule('* * * * *', () => {
+  console.log('[WA-AICE] worker is running');
+});
+
+nodeCron.schedule('0 8 * * *', () => {
+  console.log('[WA-AICE] worker 08:00 AM starting');
   main()
-}
+});

@@ -234,18 +234,18 @@ class MessageProcessor {
         console.log(`💬 Message: "${processedMessage.message}"`)
 
         // Send to API
-        // const success = await this.sendToApi(processedMessage)
+        const success = await this.sendToApi(processedMessage)
 
-        // if (success) {
-        //   // Log successful send
-        //   this.logSentPhoneNumber(
-        //     processedMessage.phoneNumber,
-        //     processedMessage.name
-        //   )
-        //   successCount++
-        // } else {
-        //   errorCount++
-        // }
+        if (success) {
+          // Log successful send
+          this.logSentPhoneNumber(
+            processedMessage.phoneNumber,
+            processedMessage.name
+          )
+          successCount++
+        } else {
+          errorCount++
+        }
 
         // Add delay between requests (except for the last one)
         if (i < csvData.length - 1) {

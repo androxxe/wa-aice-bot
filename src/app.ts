@@ -369,10 +369,10 @@ function isJson(str: unknown) {
 //   main()
 // }
 
-console.log('[WA-AICE] worker is starting');
+console.log('[WA-AICE] worker is starting', new Date());
 
 nodeCron.schedule('* * * * *', () => {
-  console.log('[WA-AICE] worker is running');
+  console.log('[WA-AICE] worker is running', new Date());
 });
 
 nodeCron.schedule('0 8 * * *', () => {

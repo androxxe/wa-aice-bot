@@ -190,9 +190,13 @@ class MessageProcessor {
   }
 
   /**
-   * Process all messages
+   * Process messages with batching support
    */
-  async processMessages(delayMs: number = 1000): Promise<void> {
+  async processMessages(
+    delayMs: number = 1000,
+    batchSize?: number,
+    startIndex: number = 0
+  ): Promise<void> {
     try {
       console.log("🚀 Starting message processing...")
 
@@ -208,19 +212,46 @@ class MessageProcessor {
         return
       }
 
-      console.log(`📊 Found ${csvData.length} new messages to process`)
+      // Apply batching if specified
+      let dataToProcess = csvData
+      let batchInfo = ""
+
+      if (batchSize && batchSize > 0) {
+        const endIndex = Math.min(startIndex + batchSize, csvData.length)
+        dataToProcess = csvData.slice(startIndex, endIndex)
+        batchInfo = ` (Batch: ${startIndex + 1}-${
+          startIndex + dataToProcess.length
+        } of ${csvData.length} total available)`
+
+        console.log(
+          `📊 Processing batch: rows ${startIndex + 1} to ${
+            startIndex + dataToProcess.length
+          }`
+        )
+        console.log(
+          `📊 Batch size: ${dataToProcess.length} messages${batchInfo}`
+        )
+
+        if (dataToProcess.length === 0) {
+          console.log("✅ No more messages to process in this batch range!")
+          return
+        }
+      } else {
+        console.log(`📊 Found ${csvData.length} new messages to process`)
+      }
 
       let successCount = 0
       let errorCount = 0
 
-      // Process each row
-      for (let i = 0; i < csvData.length; i++) {
-        const row = csvData[i]
+      // Process each row in the batch
+      for (let i = 0; i < dataToProcess.length; i++) {
+        const row = dataToProcess[i]
+        const globalIndex = startIndex + i + 1
 
         console.log(
-          `\n📤 Processing ${i + 1}/${csvData.length}: ${row.Name} (${
-            row["Phone Number"]
-          })`
+          `\n📤 Processing ${i + 1}/${
+            dataToProcess.length
+          } (Global: ${globalIndex}): ${row.Name} (${row["Phone Number"]})`
         )
 
         // Create processed message
@@ -248,20 +279,46 @@ class MessageProcessor {
         }
 
         // Add delay between requests (except for the last one)
-        if (i < csvData.length - 1) {
+        if (i < dataToProcess.length - 1) {
           console.log(`⏳ Waiting ${delayMs}ms...`)
           await this.delay(delayMs)
         }
       }
 
-      console.log("\n🎉 Processing completed!")
+      console.log(`\n🎉 Batch processing completed!${batchInfo}`)
       console.log(`✅ Successful: ${successCount}`)
       console.log(`❌ Errors: ${errorCount}`)
       console.log(`📋 Total sent (all time): ${this.sentPhoneNumbers.size}`)
+
+      // Show next batch info if applicable
+      if (batchSize && startIndex + batchSize < csvData.length) {
+        const remainingCount = csvData.length - (startIndex + batchSize)
+        console.log(
+          `\n📋 Next batch available: ${remainingCount} messages remaining`
+        )
+        console.log(
+          `💡 To process next batch, use: startIndex = ${
+            startIndex + batchSize
+          }`
+        )
+      }
     } catch (error) {
       console.error("💥 Fatal error during processing:", error)
       throw error
     }
+  }
+
+  /**
+   * Process a specific batch by batch number (1-based)
+   */
+  async processBatch(
+    batchNumber: number,
+    batchSize: number = 100,
+    delayMs: number = 1000
+  ): Promise<void> {
+    const startIndex = (batchNumber - 1) * batchSize
+    console.log(`🎯 Processing Batch ${batchNumber} (Size: ${batchSize})`)
+    await this.processMessages(delayMs, batchSize, startIndex)
   }
 
   /**
@@ -295,7 +352,8 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processMessages(1000) // 1 second delay between requests
+    await processor.processBatch(1, 5, 1000)
+
   } catch (error) {
     console.error("Application error:", error)
     process.exit(1)

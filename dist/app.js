@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const axios_1 = __importDefault(require("axios"));
-const node_cron_1 = __importDefault(require("node-cron"));
 class MessageProcessor {
     constructor(csvFilePath = "./data.csv", logFilePath = "./sent_log.txt", messageTemplate = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi.\nApakah benar pada bulan Juni toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor?\n\nTerimakasih atas konfirmasinya, Have an aice day!`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
     ) {
@@ -98,7 +97,7 @@ class MessageProcessor {
     async sendToApi(processedMessage) {
         try {
             const payload = {
-                appkey: "53c00974-5c61-47cd-aaa5-51604c37f5b9",
+                appkey: "0b4d2787-3431-4cd7-aee5-e993977a4397",
                 authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
                 to: processedMessage.phoneNumber,
                 message: processedMessage.message,
@@ -197,7 +196,7 @@ class MessageProcessor {
                 }
                 // Add delay between requests (except for the last one)
                 if (i < dataToProcess.length - 1) {
-                    console.log(`⏳ Waiting ${success ? delayMs : 1000}ms...`);
+                    console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`);
                     await this.delay(success ? delayMs : 1000);
                 }
             }
@@ -254,7 +253,7 @@ class MessageProcessor {
 async function main() {
     const processor = new MessageProcessor();
     try {
-        await processor.processBatch(3, 1000, 30000);
+        await processor.processBatch(1, 1500, 30000);
     }
     catch (error) {
         console.error("Application error:", error);
@@ -271,15 +270,15 @@ function isJson(str) {
     return true;
 }
 // Run if this file is executed directly
-// if (require.main === module) {
-//   main()
-// }
-console.log('[WA-AICE] worker is starting');
-node_cron_1.default.schedule('* * * * *', () => {
-    console.log('[WA-AICE] worker is running', new Date());
-});
-node_cron_1.default.schedule('0 8 * * *', () => {
-    console.log('[WA-AICE] worker 08:00 AM starting');
+if (require.main === module) {
     main();
-});
+}
+console.log('[WA-AICE] worker is starting', new Date());
+// nodeCron.schedule('* * * * *', () => {
+//   console.log('[WA-AICE] worker is running', new Date());
+// });
+// nodeCron.schedule('0 8 * * *', () => {
+//   console.log('[WA-AICE] worker 08:00 AM starting');
+//   main()
+// });
 //# sourceMappingURL=app.js.map

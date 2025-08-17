@@ -1,7 +1,7 @@
 import fs from "fs"
 import csv from "csv-parser"
 import axios from "axios"
-import nodeCron from 'node-cron';
+// import nodeCron from 'node-cron';
 
 interface CsvRow {
   Name: string
@@ -131,7 +131,7 @@ class MessageProcessor {
   ): Promise<boolean> {
     try {
       const payload = {
-        appkey: "53c00974-5c61-47cd-aaa5-51604c37f5b9",
+        appkey: "0b4d2787-3431-4cd7-aee5-e993977a4397",
         authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
         to: processedMessage.phoneNumber,
         message: processedMessage.message,
@@ -371,9 +371,9 @@ if (require.main === module) {
 
 console.log('[WA-AICE] worker is starting', new Date());
 
-nodeCron.schedule('* * * * *', () => {
-  console.log('[WA-AICE] worker is running', new Date());
-});
+// nodeCron.schedule('* * * * *', () => {
+//   console.log('[WA-AICE] worker is running', new Date());
+// });
 
 // nodeCron.schedule('0 8 * * *', () => {
 //   console.log('[WA-AICE] worker 08:00 AM starting');

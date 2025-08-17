@@ -365,9 +365,9 @@ function isJson(str: unknown) {
 }
 
 // Run if this file is executed directly
-// if (require.main === module) {
-//   main()
-// }
+if (require.main === module) {
+  main()
+}
 
 console.log('[WA-AICE] worker is starting', new Date());
 
@@ -375,7 +375,7 @@ nodeCron.schedule('* * * * *', () => {
   console.log('[WA-AICE] worker is running', new Date());
 });
 
-nodeCron.schedule('0 8 * * *', () => {
-  console.log('[WA-AICE] worker 08:00 AM starting');
-  main()
-});
+// nodeCron.schedule('0 8 * * *', () => {
+//   console.log('[WA-AICE] worker 08:00 AM starting');
+//   main()
+// });

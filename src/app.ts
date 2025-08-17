@@ -275,7 +275,7 @@ class MessageProcessor {
 
         // Add delay between requests (except for the last one)
         if (i < dataToProcess.length - 1) {
-          console.log(`⏳ Waiting ${success ? delayMs : 1000}ms...`)
+          console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`)
           await this.delay(success ? delayMs : 1000)
         }
       }
@@ -347,7 +347,7 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processBatch(1, 1000, 30000)
+    await processor.processBatch(1, 1500, 30000)
 
   } catch (error) {
     console.error("Application error:", error)

@@ -47,7 +47,10 @@ class MessageProcessor {
   private loadSentPhoneNumbers(): void {
     try {
       if (fs.existsSync(this.successLogFilePath)) {
-        const successLogContent = fs.readFileSync(this.successLogFilePath, "utf8")
+        const successLogContent = fs.readFileSync(
+          this.successLogFilePath,
+          "utf8"
+        )
         const sentPhoneNumbers = successLogContent
           .split("\n")
           .filter((line) => line.trim())
@@ -113,12 +116,9 @@ class MessageProcessor {
       "[2]": value,
     }
 
-    return template.replace(
-      /\[(\d+)]/g,
-      (match, index) => {
-        return replacements[match]
-      }
-    )
+    return template.replace(/\[(\d+)]/g, (match, index) => {
+      return replacements[match]
+    })
   }
 
   /**
@@ -127,6 +127,9 @@ class MessageProcessor {
   private async readCsvFile(): Promise<CsvRow[]> {
     return new Promise((resolve, reject) => {
       const results: CsvRow[] = []
+      let totalRows = 0
+      let sentSkipped = 0
+      let errorSkipped = 0
 
       if (!fs.existsSync(this.csvFilePath)) {
         reject(new Error(`CSV file not found: ${this.csvFilePath}`))
@@ -136,14 +139,41 @@ class MessageProcessor {
       fs.createReadStream(this.csvFilePath)
         .pipe(csv())
         .on("data", (data: CsvRow) => {
-          // Skip if phone number was already sent
-          if (!this.sentPhoneNumbers.has(data["Phone Number"])) {
-            if(!this.errorPhoneNumbers.has(data["Phone Number"])){
-              results.push(data)
-            }
+          totalRows++
+          console.log(`Row ${totalRows}:`, {
+            name: data.Name,
+            phone: data["Phone Number"],
+            value: data.Value,
+          })
+
+          // Check if already sent successfully
+          if (this.sentPhoneNumbers.has(data["Phone Number"])) {
+            sentSkipped++
+            return
           }
+
+          // Check if in error log
+          if (this.errorPhoneNumbers.has(data["Phone Number"])) {
+            errorSkipped++
+            return
+          }
+
+          // Check for missing required fields
+          if (!data.Name || !data.Value || !data["Phone Number"]) {
+            return
+          }
+
+          results.push(data)
         })
         .on("end", () => {
+          console.log(`\n📊 CSV Processing Summary:`)
+          console.log(`  Total rows in CSV: ${totalRows}`)
+          console.log(`  Already sent successfully: ${sentSkipped}`)
+          console.log(`  In error log: ${errorSkipped}`)
+          console.log(`  Available for processing: ${results.length}`)
+          console.log(`  Total in sent log: ${this.sentPhoneNumbers.size}`)
+          console.log(`  Total in error log: ${this.errorPhoneNumbers.size}`)
+
           resolve(results)
         })
         .on("error", (error) => {
@@ -268,7 +298,6 @@ class MessageProcessor {
       let errorCount = 0
 
       // Process each row in the batch
-      console.log('dataTo', dataToProcess)
       for (let i = 0; i < dataToProcess.length; i++) {
         const row = dataToProcess[i]
         const globalIndex = startIndex + i + 1
@@ -289,35 +318,28 @@ class MessageProcessor {
 
         console.log(`💬 Message: "${processedMessage.message}"`)
 
-        if(row.Name && row.Value){
-          // Send to API
-          const success = await this.sendToApi(processedMessage)
-  
-          if (success) {
-            // Log successful send
-            this.logSuccessSentPhoneNumber(
-              processedMessage.phoneNumber,
-              processedMessage.name
-            )
-            successCount++
-          } else {
-            errorCount++
-            this.logErrorSentPhoneNumber(
-              processedMessage.phoneNumber,
-              processedMessage.name
-            )
-          }
-  
-          // Add delay between requests (except for the last one)
-          if (i < dataToProcess.length - 1) {
-            console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`)
-            await this.delay(success ? delayMs : 100)
-          }
+        // Send to API
+        const success = await this.sendToApi(processedMessage)
+
+        if (success) {
+          // Log successful send
+          this.logSuccessSentPhoneNumber(
+            processedMessage.phoneNumber,
+            processedMessage.name
+          )
+          successCount++
         } else {
+          errorCount++
           this.logErrorSentPhoneNumber(
             processedMessage.phoneNumber,
             processedMessage.name
-          );
+          )
+        }
+
+        // Add delay between requests (except for the last one)
+        if (i < dataToProcess.length - 1) {
+          console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`)
+          await this.delay(success ? delayMs : 100)
         }
       }
 
@@ -389,8 +411,7 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processBatch(1, 1500, 30000)
-
+    await processor.processBatch(1, 2000, 30000)
   } catch (error) {
     console.error("Application error:", error)
     process.exit(1)
@@ -411,7 +432,7 @@ if (require.main === module) {
   main()
 }
 
-console.log('[WA-AICE] worker is starting', new Date());
+console.log("[WA-AICE] worker is starting", new Date())
 
 // nodeCron.schedule('* * * * *', () => {
 //   console.log('[WA-AICE] worker is running', new Date());

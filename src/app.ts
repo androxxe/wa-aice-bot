@@ -17,23 +17,28 @@ interface ProcessedMessage {
 }
 
 class MessageProcessor {
-  private logFilePath: string
+  private successLogFilePath: string
+  private errorLogFilePath: string
   private csvFilePath: string
   private messageTemplate: string
   private apiUrl: string
   private sentPhoneNumbers: Set<string>
+  private errorPhoneNumbers: Set<string>
 
   constructor(
     csvFilePath: string = "./data.csv",
-    logFilePath: string = "./sent_log.txt",
+    successLogFilePath: string = "./sent_log.txt",
+    errorLogFilePath: string = "./error_log.txt",
     messageTemplate: string = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi.\nApakah benar pada bulan Juni toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor?\n\nTerimakasih atas konfirmasinya, Have an aice day!`,
     apiUrl: string = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
   ) {
     this.csvFilePath = csvFilePath
-    this.logFilePath = logFilePath
+    this.successLogFilePath = successLogFilePath
+    this.errorLogFilePath = errorLogFilePath
     this.messageTemplate = messageTemplate
     this.apiUrl = apiUrl
     this.sentPhoneNumbers = new Set()
+    this.errorPhoneNumbers = new Set()
   }
 
   /**
@@ -41,17 +46,26 @@ class MessageProcessor {
    */
   private loadSentPhoneNumbers(): void {
     try {
-      if (fs.existsSync(this.logFilePath)) {
-        const logContent = fs.readFileSync(this.logFilePath, "utf8")
-        const phoneNumbers = logContent
+      if (fs.existsSync(this.successLogFilePath)) {
+        const successLogContent = fs.readFileSync(this.successLogFilePath, "utf8")
+        const sentPhoneNumbers = successLogContent
           .split("\n")
           .filter((line) => line.trim())
           .map((line) => line.split(",")[0]) // Get phone number (first column)
           .filter((phone) => phone)
 
-        this.sentPhoneNumbers = new Set(phoneNumbers)
+        this.sentPhoneNumbers = new Set(sentPhoneNumbers)
+
+        const errorLogContent = fs.readFileSync(this.errorLogFilePath, "utf8")
+        const errorPhoneNumbers = errorLogContent
+          .split("\n")
+          .filter((line) => line.trim())
+          .map((line) => line.split(",")[0]) // Get phone number (first column)
+          .filter((phone) => phone)
+
+        this.errorPhoneNumbers = new Set(errorPhoneNumbers)
         console.log(
-          `📋 Loaded ${this.sentPhoneNumbers.size} previously sent phone numbers`
+          `📋 Loaded ${this.sentPhoneNumbers.size} previously sent phone numbers and error phone numbers`
         )
       } else {
         console.log("📋 No previous log file found, starting fresh")
@@ -59,19 +73,32 @@ class MessageProcessor {
     } catch (error) {
       console.error("❌ Error loading sent phone numbers:", error)
       this.sentPhoneNumbers = new Set()
+      this.errorPhoneNumbers = new Set()
     }
   }
 
   /**
    * Log a sent phone number with timestamp
    */
-  private logSentPhoneNumber(phoneNumber: string, name: string): void {
+  private logSuccessSentPhoneNumber(phoneNumber: string, name: string): void {
     const timestamp = new Date().toISOString()
     const logEntry = `${phoneNumber},${name},${timestamp}\n`
 
     try {
-      fs.appendFileSync(this.logFilePath, logEntry)
+      fs.appendFileSync(this.successLogFilePath, logEntry)
       this.sentPhoneNumbers.add(phoneNumber)
+    } catch (error) {
+      console.error("❌ Error writing to log file:", error)
+    }
+  }
+
+  private logErrorSentPhoneNumber(phoneNumber: string, name: string): void {
+    const timestamp = new Date().toISOString()
+    const logEntry = `${phoneNumber},${name},${timestamp}\n`
+
+    try {
+      fs.appendFileSync(this.errorLogFilePath, logEntry)
+      this.errorPhoneNumbers.add(phoneNumber)
     } catch (error) {
       console.error("❌ Error writing to log file:", error)
     }
@@ -111,6 +138,11 @@ class MessageProcessor {
         .on("data", (data: CsvRow) => {
           // Skip if phone number was already sent
           if (!this.sentPhoneNumbers.has(data["Phone Number"])) {
+            results.push(data)
+          }
+
+          // Skip if phone number was already sent and error
+          if (!this.errorPhoneNumbers.has(data["Phone Number"])) {
             results.push(data)
           }
         })
@@ -264,13 +296,18 @@ class MessageProcessor {
 
         if (success) {
           // Log successful send
-          this.logSentPhoneNumber(
+          this.logSuccessSentPhoneNumber(
             processedMessage.phoneNumber,
             processedMessage.name
           )
           successCount++
         } else {
           errorCount++
+          this.logErrorSentPhoneNumber(
+            processedMessage.phoneNumber,
+            processedMessage.name
+          )
+
         }
 
         // Add delay between requests (except for the last one)
@@ -319,10 +356,10 @@ class MessageProcessor {
   /**
    * Get statistics about sent messages
    */
-  getStats(): { totalSent: number; logFilePath: string } {
+  getStats(): { totalSent: number; successLogFilePath: string } {
     return {
       totalSent: this.sentPhoneNumbers.size,
-      logFilePath: this.logFilePath,
+      successLogFilePath: this.successLogFilePath,
     }
   }
 
@@ -331,9 +368,10 @@ class MessageProcessor {
    */
   clearLog(): void {
     try {
-      if (fs.existsSync(this.logFilePath)) {
-        fs.unlinkSync(this.logFilePath)
+      if (fs.existsSync(this.successLogFilePath)) {
+        fs.unlinkSync(this.successLogFilePath)
         this.sentPhoneNumbers.clear()
+        this.errorPhoneNumbers.clear()
         console.log("🗑️ Log file cleared")
       }
     } catch (error) {

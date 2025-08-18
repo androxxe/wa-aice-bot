@@ -268,6 +268,7 @@ class MessageProcessor {
       let errorCount = 0
 
       // Process each row in the batch
+      console.log('dataTo', dataToProcess)
       for (let i = 0; i < dataToProcess.length; i++) {
         const row = dataToProcess[i]
         const globalIndex = startIndex + i + 1
@@ -288,28 +289,35 @@ class MessageProcessor {
 
         console.log(`💬 Message: "${processedMessage.message}"`)
 
-        // Send to API
-        const success = await this.sendToApi(processedMessage)
-
-        if (success) {
-          // Log successful send
-          this.logSuccessSentPhoneNumber(
-            processedMessage.phoneNumber,
-            processedMessage.name
-          )
-          successCount++
+        if(row.Name && row.Value){
+          // Send to API
+          const success = await this.sendToApi(processedMessage)
+  
+          if (success) {
+            // Log successful send
+            this.logSuccessSentPhoneNumber(
+              processedMessage.phoneNumber,
+              processedMessage.name
+            )
+            successCount++
+          } else {
+            errorCount++
+            this.logErrorSentPhoneNumber(
+              processedMessage.phoneNumber,
+              processedMessage.name
+            )
+          }
+  
+          // Add delay between requests (except for the last one)
+          if (i < dataToProcess.length - 1) {
+            console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`)
+            await this.delay(success ? delayMs : 100)
+          }
         } else {
-          errorCount++
           this.logErrorSentPhoneNumber(
             processedMessage.phoneNumber,
             processedMessage.name
-          )
-        }
-
-        // Add delay between requests (except for the last one)
-        if (i < dataToProcess.length - 1) {
-          console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`)
-          await this.delay(success ? delayMs : 100)
+          );
         }
       }
 

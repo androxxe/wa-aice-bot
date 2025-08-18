@@ -138,12 +138,9 @@ class MessageProcessor {
         .on("data", (data: CsvRow) => {
           // Skip if phone number was already sent
           if (!this.sentPhoneNumbers.has(data["Phone Number"])) {
-            results.push(data)
-          }
-
-          // Skip if phone number was already sent and error
-          if (!this.errorPhoneNumbers.has(data["Phone Number"])) {
-            results.push(data)
+            if(!this.errorPhoneNumbers.has(data["Phone Number"])){
+              results.push(data)
+            }
           }
         })
         .on("end", () => {
@@ -307,13 +304,12 @@ class MessageProcessor {
             processedMessage.phoneNumber,
             processedMessage.name
           )
-
         }
 
         // Add delay between requests (except for the last one)
         if (i < dataToProcess.length - 1) {
           console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`)
-          await this.delay(success ? delayMs : 1000)
+          await this.delay(success ? delayMs : 100)
         }
       }
 

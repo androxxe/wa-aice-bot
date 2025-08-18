@@ -253,7 +253,7 @@ class MessageProcessor {
 async function main() {
     const processor = new MessageProcessor();
     try {
-        await processor.processBatch(1, 1500, 30000);
+        await processor.processBatch(1, 500, 30000);
     }
     catch (error) {
         console.error("Application error:", error);

@@ -7,28 +7,37 @@ const fs_1 = __importDefault(require("fs"));
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const axios_1 = __importDefault(require("axios"));
 class MessageProcessor {
-    constructor(csvFilePath = "./data.csv", logFilePath = "./sent_log.txt", messageTemplate = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi.\nApakah benar pada bulan Juni toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor?\n\nTerimakasih atas konfirmasinya, Have an aice day!`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
+    constructor(csvFilePath = "./data.csv", successLogFilePath = "./sent_log.txt", errorLogFilePath = "./error_log.txt", messageTemplate = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi.\nApakah benar pada bulan Juni toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor?\n\nTerimakasih atas konfirmasinya, Have an aice day!`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
     ) {
         this.csvFilePath = csvFilePath;
-        this.logFilePath = logFilePath;
+        this.successLogFilePath = successLogFilePath;
+        this.errorLogFilePath = errorLogFilePath;
         this.messageTemplate = messageTemplate;
         this.apiUrl = apiUrl;
         this.sentPhoneNumbers = new Set();
+        this.errorPhoneNumbers = new Set();
     }
     /**
      * Load previously sent phone numbers from log file
      */
     loadSentPhoneNumbers() {
         try {
-            if (fs_1.default.existsSync(this.logFilePath)) {
-                const logContent = fs_1.default.readFileSync(this.logFilePath, "utf8");
-                const phoneNumbers = logContent
+            if (fs_1.default.existsSync(this.successLogFilePath)) {
+                const successLogContent = fs_1.default.readFileSync(this.successLogFilePath, "utf8");
+                const sentPhoneNumbers = successLogContent
                     .split("\n")
                     .filter((line) => line.trim())
                     .map((line) => line.split(",")[0]) // Get phone number (first column)
                     .filter((phone) => phone);
-                this.sentPhoneNumbers = new Set(phoneNumbers);
-                console.log(`📋 Loaded ${this.sentPhoneNumbers.size} previously sent phone numbers`);
+                this.sentPhoneNumbers = new Set(sentPhoneNumbers);
+                const errorLogContent = fs_1.default.readFileSync(this.errorLogFilePath, "utf8");
+                const errorPhoneNumbers = errorLogContent
+                    .split("\n")
+                    .filter((line) => line.trim())
+                    .map((line) => line.split(",")[0]) // Get phone number (first column)
+                    .filter((phone) => phone);
+                this.errorPhoneNumbers = new Set(errorPhoneNumbers);
+                console.log(`📋 Loaded ${this.sentPhoneNumbers.size} previously sent phone numbers and error phone numbers`);
             }
             else {
                 console.log("📋 No previous log file found, starting fresh");
@@ -37,17 +46,29 @@ class MessageProcessor {
         catch (error) {
             console.error("❌ Error loading sent phone numbers:", error);
             this.sentPhoneNumbers = new Set();
+            this.errorPhoneNumbers = new Set();
         }
     }
     /**
      * Log a sent phone number with timestamp
      */
-    logSentPhoneNumber(phoneNumber, name) {
+    logSuccessSentPhoneNumber(phoneNumber, name) {
         const timestamp = new Date().toISOString();
         const logEntry = `${phoneNumber},${name},${timestamp}\n`;
         try {
-            fs_1.default.appendFileSync(this.logFilePath, logEntry);
+            fs_1.default.appendFileSync(this.successLogFilePath, logEntry);
             this.sentPhoneNumbers.add(phoneNumber);
+        }
+        catch (error) {
+            console.error("❌ Error writing to log file:", error);
+        }
+    }
+    logErrorSentPhoneNumber(phoneNumber, name) {
+        const timestamp = new Date().toISOString();
+        const logEntry = `${phoneNumber},${name},${timestamp}\n`;
+        try {
+            fs_1.default.appendFileSync(this.errorLogFilePath, logEntry);
+            this.errorPhoneNumbers.add(phoneNumber);
         }
         catch (error) {
             console.error("❌ Error writing to log file:", error);
@@ -80,7 +101,9 @@ class MessageProcessor {
                 .on("data", (data) => {
                 // Skip if phone number was already sent
                 if (!this.sentPhoneNumbers.has(data["Phone Number"])) {
-                    results.push(data);
+                    if (!this.errorPhoneNumbers.has(data["Phone Number"])) {
+                        results.push(data);
+                    }
                 }
             })
                 .on("end", () => {
@@ -188,11 +211,12 @@ class MessageProcessor {
                 const success = await this.sendToApi(processedMessage);
                 if (success) {
                     // Log successful send
-                    this.logSentPhoneNumber(processedMessage.phoneNumber, processedMessage.name);
+                    this.logSuccessSentPhoneNumber(processedMessage.phoneNumber, processedMessage.name);
                     successCount++;
                 }
                 else {
                     errorCount++;
+                    this.logErrorSentPhoneNumber(processedMessage.phoneNumber, processedMessage.name);
                 }
                 // Add delay between requests (except for the last one)
                 if (i < dataToProcess.length - 1) {
@@ -230,7 +254,7 @@ class MessageProcessor {
     getStats() {
         return {
             totalSent: this.sentPhoneNumbers.size,
-            logFilePath: this.logFilePath,
+            successLogFilePath: this.successLogFilePath,
         };
     }
     /**
@@ -238,9 +262,10 @@ class MessageProcessor {
      */
     clearLog() {
         try {
-            if (fs_1.default.existsSync(this.logFilePath)) {
-                fs_1.default.unlinkSync(this.logFilePath);
+            if (fs_1.default.existsSync(this.successLogFilePath)) {
+                fs_1.default.unlinkSync(this.successLogFilePath);
                 this.sentPhoneNumbers.clear();
+                this.errorPhoneNumbers.clear();
                 console.log("🗑️ Log file cleared");
             }
         }
@@ -253,7 +278,7 @@ class MessageProcessor {
 async function main() {
     const processor = new MessageProcessor();
     try {
-        await processor.processBatch(1, 500, 30000);
+        await processor.processBatch(1, 1500, 30000);
     }
     catch (error) {
         console.error("Application error:", error);

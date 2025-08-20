@@ -338,8 +338,8 @@ class MessageProcessor {
 
         // Add delay between requests (except for the last one)
         if (i < dataToProcess.length - 1) {
-          console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`)
-          await this.delay(success ? delayMs : 100)
+          console.log(`⏳ Waiting ${success ? delayMs : 500}ms...`)
+          await this.delay(success ? delayMs : 500)
         }
       }
 

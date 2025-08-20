@@ -190,7 +190,7 @@ class MessageProcessor {
   ): Promise<boolean> {
     try {
       const payload = {
-        appkey: "0b4d2787-3431-4cd7-aee5-e993977a4397",
+        appkey: "40538016-fa46-447c-8a43-992fa0540f8d",
         authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
         to: processedMessage.phoneNumber,
         message: processedMessage.message,

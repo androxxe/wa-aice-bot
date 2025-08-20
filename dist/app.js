@@ -145,7 +145,7 @@ class MessageProcessor {
     async sendToApi(processedMessage) {
         try {
             const payload = {
-                appkey: "0b4d2787-3431-4cd7-aee5-e993977a4397",
+                appkey: "40538016-fa46-447c-8a43-992fa0540f8d",
                 authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
                 to: processedMessage.phoneNumber,
                 message: processedMessage.message,
@@ -245,8 +245,8 @@ class MessageProcessor {
                 }
                 // Add delay between requests (except for the last one)
                 if (i < dataToProcess.length - 1) {
-                    console.log(`⏳ Waiting ${success ? delayMs : 100}ms...`);
-                    await this.delay(success ? delayMs : 100);
+                    console.log(`⏳ Waiting ${success ? delayMs : 500}ms...`);
+                    await this.delay(success ? delayMs : 500);
                 }
             }
             console.log(`\n🎉 Batch processing completed!${batchInfo}`);
@@ -303,7 +303,7 @@ class MessageProcessor {
 async function main() {
     const processor = new MessageProcessor();
     try {
-        await processor.processBatch(1, 2000, 30000);
+        await processor.processBatch(1, 500, 30000);
     }
     catch (error) {
         console.error("Application error:", error);

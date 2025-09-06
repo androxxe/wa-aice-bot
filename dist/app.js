@@ -145,7 +145,7 @@ class MessageProcessor {
     async sendToApi(processedMessage) {
         try {
             const payload = {
-                appkey: "40538016-fa46-447c-8a43-992fa0540f8d",
+                appkey: "5dd15be3-dacb-4a8c-81c4-82cccd9b9348",
                 authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
                 to: processedMessage.phoneNumber,
                 message: processedMessage.message,

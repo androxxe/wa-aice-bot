@@ -7,7 +7,7 @@ const fs_1 = __importDefault(require("fs"));
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const axios_1 = __importDefault(require("axios"));
 class MessageProcessor {
-    constructor(csvFilePath = "./data.csv", successLogFilePath = "./sent_log.txt", errorLogFilePath = "./error_log.txt", messageTemplate = `Halo bapak / ibu [1], saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan Juli toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor?\nTerimakasih atas konfirmasinya\nHave an aice day!`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
+    constructor(csvFilePath = "./data.csv", successLogFilePath = "./sent_log.txt", errorLogFilePath = "./error_log.txt", messageTemplate = `Halo bapak / ibu Mitra Aice, saya Rut dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan Juli toko bapak/ibu benar melakukan pemesanan eskrim sebanyak [2] dus ke distributor?\nTerimakasih atas konfirmasinya\nHave an aice day!`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
     ) {
         this.csvFilePath = csvFilePath;
         this.successLogFilePath = successLogFilePath;

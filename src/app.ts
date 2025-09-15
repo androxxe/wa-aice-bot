@@ -1,7 +1,7 @@
 import fs from "fs"
 import csv from "csv-parser"
 import axios, { AxiosError } from "axios"
-// import nodeCron from 'node-cron';
+import 'dotenv/config'
 
 interface CsvRow {
   Name: string
@@ -193,8 +193,8 @@ class MessageProcessor {
   }> {
     try {
       const payload = {
-        appkey: "5dd15be3-dacb-4a8c-81c4-82cccd9b9348",
-        authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
+        appkey: process.env.WHATSAPP_APP_KEY,
+        authkey: process.env.WHATSAPP_AUTH_KEY,
         to: processedMessage.phoneNumber,
         message: processedMessage.message,
       }

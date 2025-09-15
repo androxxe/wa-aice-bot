@@ -1,6 +1,6 @@
 import fs from "fs"
 import csv from "csv-parser"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 // import nodeCron from 'node-cron';
 
 interface CsvRow {
@@ -187,7 +187,10 @@ class MessageProcessor {
    */
   private async sendToApi(
     processedMessage: ProcessedMessage
-  ): Promise<boolean> {
+  ): Promise<{
+    success: boolean
+    statusCode: number
+  }> {
     try {
       const payload = {
         appkey: "5dd15be3-dacb-4a8c-81c4-82cccd9b9348",
@@ -213,12 +216,18 @@ class MessageProcessor {
         console.log(
           `✅ Message sent to ${processedMessage.phoneNumber} (${processedMessage.name})`
         )
-        return true
+        return {
+          success: true,
+          statusCode: response.status,
+        }
       } else {
         console.error(
           `❌ API returned status ${response.status} for ${processedMessage.phoneNumber}`
         )
-        return false
+        return {
+          success: false,
+          statusCode: response.status,
+        }
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -232,7 +241,11 @@ class MessageProcessor {
           error
         )
       }
-      return false
+
+      return {
+        success: false,
+        statusCode: (error as AxiosError)?.response?.status || 500,
+      }
     }
   }
 
@@ -319,9 +332,9 @@ class MessageProcessor {
         console.log(`💬 Message: "${processedMessage.message}"`)
 
         // Send to API
-        const success = await this.sendToApi(processedMessage)
+        const response = await this.sendToApi(processedMessage)
 
-        if (success) {
+        if (response.success) {
           // Log successful send
           this.logSuccessSentPhoneNumber(
             processedMessage.phoneNumber,
@@ -329,17 +342,19 @@ class MessageProcessor {
           )
           successCount++
         } else {
-          errorCount++
-          this.logErrorSentPhoneNumber(
-            processedMessage.phoneNumber,
-            processedMessage.name
-          )
+          if(![502, 503, 504].includes(response.statusCode)) {
+            errorCount++
+            this.logErrorSentPhoneNumber(
+              processedMessage.phoneNumber,
+              processedMessage.name
+            )
+          }
         }
 
         // Add delay between requests (except for the last one)
         if (i < dataToProcess.length - 1) {
-          console.log(`⏳ Waiting ${success ? delayMs : 500}ms...`)
-          await this.delay(success ? delayMs : 500)
+          console.log(`⏳ Waiting ${response.success ? delayMs : 500}ms...`)
+          await this.delay(response.success ? delayMs : 500)
         }
       }
 

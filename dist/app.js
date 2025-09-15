@@ -162,11 +162,17 @@ class MessageProcessor {
                 response.status < 300 &&
                 isJson(JSON.stringify(response.data))) {
                 console.log(`✅ Message sent to ${processedMessage.phoneNumber} (${processedMessage.name})`);
-                return true;
+                return {
+                    success: true,
+                    statusCode: response.status,
+                };
             }
             else {
                 console.error(`❌ API returned status ${response.status} for ${processedMessage.phoneNumber}`);
-                return false;
+                return {
+                    success: false,
+                    statusCode: response.status,
+                };
             }
         }
         catch (error) {
@@ -176,7 +182,10 @@ class MessageProcessor {
             else {
                 console.error(`❌ Unexpected error for ${processedMessage.phoneNumber}:`, error);
             }
-            return false;
+            return {
+                success: false,
+                statusCode: error?.response?.status || 500,
+            };
         }
     }
     /**
@@ -233,20 +242,22 @@ class MessageProcessor {
                 };
                 console.log(`💬 Message: "${processedMessage.message}"`);
                 // Send to API
-                const success = await this.sendToApi(processedMessage);
-                if (success) {
+                const response = await this.sendToApi(processedMessage);
+                if (response.success) {
                     // Log successful send
                     this.logSuccessSentPhoneNumber(processedMessage.phoneNumber, processedMessage.name);
                     successCount++;
                 }
                 else {
-                    errorCount++;
-                    this.logErrorSentPhoneNumber(processedMessage.phoneNumber, processedMessage.name);
+                    if (![502, 503, 504].includes(response.statusCode)) {
+                        errorCount++;
+                        this.logErrorSentPhoneNumber(processedMessage.phoneNumber, processedMessage.name);
+                    }
                 }
                 // Add delay between requests (except for the last one)
                 if (i < dataToProcess.length - 1) {
-                    console.log(`⏳ Waiting ${success ? delayMs : 500}ms...`);
-                    await this.delay(success ? delayMs : 500);
+                    console.log(`⏳ Waiting ${response.success ? delayMs : 500}ms...`);
+                    await this.delay(response.success ? delayMs : 500);
                 }
             }
             console.log(`\n🎉 Batch processing completed!${batchInfo}`);

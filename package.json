@@ -11,10 +11,10 @@
     "clean": "rm -rf dist",
     "clear-log": "rm -f sent_log.txt",
     "pm2:start": "pnpm run build && pm2 start ecosystem.config.js",
-    "pm2:stop": "pm2 stop wa-aice",
-    "pm2:logs": "pm2 logs wa-aice",
+    "pm2:stop": "pm2 stop wa-aice-rut",
+    "pm2:logs": "pm2 logs wa-aice-rut",
     "pm2:list": "pm2 list",
-    "pm2:delete": "pm2 delete wa-aice",
+    "pm2:delete": "pm2 delete wa-aice-rut",
     "pm2:delete:all": "pm2 delete all",
     "pm2:kill": "pm2 kill"
   },

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const axios_1 = __importDefault(require("axios"));
+require("dotenv/config");
 class MessageProcessor {
     constructor(csvFilePath = "./data.csv", successLogFilePath = "./sent_log.txt", errorLogFilePath = "./error_log.txt", messageTemplate = `Halo bapak / ibu Mitra Aice, saya dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan Agustus toko bapak/ibu benar melakukan pemesanan eskrim totalnya sebanyak [2] dus ke distributor?\nTerimakasih atas konfirmasinya\nHave an aice day!`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
     ) {
@@ -145,8 +146,8 @@ class MessageProcessor {
     async sendToApi(processedMessage) {
         try {
             const payload = {
-                appkey: "5dd15be3-dacb-4a8c-81c4-82cccd9b9348",
-                authkey: "cZsgEsVoFrFUkDSA0DPDPNYL7DKArKzQl87ighFzl6pKztY52i",
+                appkey: process.env.WHATSAPP_APP_KEY,
+                authkey: process.env.WHATSAPP_AUTH_KEY,
                 to: processedMessage.phoneNumber,
                 message: processedMessage.message,
             };
@@ -242,6 +243,7 @@ class MessageProcessor {
                 };
                 console.log(`💬 Message: "${processedMessage.message}"`);
                 // Send to API
+<<<<<<< HEAD
                 const response = await this.sendToApi(processedMessage);
                 if (response.success) {
                     // Log successful send
@@ -259,6 +261,34 @@ class MessageProcessor {
                     console.log(`⏳ Waiting ${response.success ? delayMs : 500}ms...`);
                     await this.delay(response.success ? delayMs : 500);
                 }
+=======
+                // const response = await this.sendToApi(processedMessage)
+                // if (response.success) {
+                //   // Log successful send
+                //   this.logSuccessSentPhoneNumber(
+                //     processedMessage.phoneNumber,
+                //     processedMessage.name
+                //   )
+                //   successCount++
+                // } else {
+                //   if(![502, 503, 504].includes(response.statusCode)) {
+                //     errorCount++
+                //     this.logErrorSentPhoneNumber(
+                //       processedMessage.phoneNumber,
+                //       processedMessage.name
+                //     )
+                //   }
+                // }
+                // // Add delay between requests (except for the last one)
+                // if (i < dataToProcess.length - 1) {
+                //   console.log(`⏳ Waiting ${response.success ? delayMs : 500}ms...`)
+                //   await this.delay(response.success ? delayMs : 500)
+                // }
+                console.log('pay', {
+                    appkey: process.env.WHATSAPP_APP_KEY,
+                    authkey: process.env.WHATSAPP_AUTH_KEY,
+                });
+>>>>>>> 39ddd6bdf3795137e2b9af72d864e4caaab2ba81
             }
             console.log(`\n🎉 Batch processing completed!${batchInfo}`);
             console.log(`✅ Successful: ${successCount}`);

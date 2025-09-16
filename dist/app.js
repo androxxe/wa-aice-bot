@@ -243,7 +243,6 @@ class MessageProcessor {
                 };
                 console.log(`💬 Message: "${processedMessage.message}"`);
                 // Send to API
-<<<<<<< HEAD
                 const response = await this.sendToApi(processedMessage);
                 if (response.success) {
                     // Log successful send
@@ -261,34 +260,6 @@ class MessageProcessor {
                     console.log(`⏳ Waiting ${response.success ? delayMs : 500}ms...`);
                     await this.delay(response.success ? delayMs : 500);
                 }
-=======
-                // const response = await this.sendToApi(processedMessage)
-                // if (response.success) {
-                //   // Log successful send
-                //   this.logSuccessSentPhoneNumber(
-                //     processedMessage.phoneNumber,
-                //     processedMessage.name
-                //   )
-                //   successCount++
-                // } else {
-                //   if(![502, 503, 504].includes(response.statusCode)) {
-                //     errorCount++
-                //     this.logErrorSentPhoneNumber(
-                //       processedMessage.phoneNumber,
-                //       processedMessage.name
-                //     )
-                //   }
-                // }
-                // // Add delay between requests (except for the last one)
-                // if (i < dataToProcess.length - 1) {
-                //   console.log(`⏳ Waiting ${response.success ? delayMs : 500}ms...`)
-                //   await this.delay(response.success ? delayMs : 500)
-                // }
-                console.log('pay', {
-                    appkey: process.env.WHATSAPP_APP_KEY,
-                    authkey: process.env.WHATSAPP_AUTH_KEY,
-                });
->>>>>>> 39ddd6bdf3795137e2b9af72d864e4caaab2ba81
             }
             console.log(`\n🎉 Batch processing completed!${batchInfo}`);
             console.log(`✅ Successful: ${successCount}`);

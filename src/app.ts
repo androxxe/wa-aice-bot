@@ -426,7 +426,7 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processBatch(1, 150, 30000)
+    await processor.processBatch(1, 150, 25000)
   } catch (error) {
     console.error("Application error:", error)
     process.exit(1)

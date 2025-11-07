@@ -8,7 +8,7 @@ const csv_parser_1 = __importDefault(require("csv-parser"));
 const axios_1 = __importDefault(require("axios"));
 require("dotenv/config");
 class MessageProcessor {
-    constructor(csvFilePath = "./data.csv", successLogFilePath = "./sent_log.txt", errorLogFilePath = "./error_log.txt", messageTemplate = `Halo bapak / ibu Mitra Aice, saya dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan 9 (September) toko bapak/ibu menerima [2] pcs eskrim crispy balls kemasan baru dalam event coba gratis crispy balls?\nTerimakasih atas konfirmasinya\nHave an aice day! (ya=1, tidak=0)`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
+    constructor(csvFilePath = "./data.csv", successLogFilePath = "./sent_log.txt", errorLogFilePath = "./error_log.txt", messageTemplate = `Halo bapak / ibu Mitra Aice [1], saya dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan 9 (September) toko bapak/ibu menerima [2] pcs eskrim crispy balls kemasan baru dalam event coba gratis crispy balls?\nTerimakasih atas konfirmasinya\n\nGarut\nHave an aice day! (ya=1, tidak=0)`, apiUrl = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
     ) {
         this.csvFilePath = csvFilePath;
         this.successLogFilePath = successLogFilePath;
@@ -178,7 +178,7 @@ class MessageProcessor {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                console.error(`❌ API error for ${processedMessage.phoneNumber}:`, error.response?.data || error.message);
+                console.error(`❌ API error for ${processedMessage.phoneNumber}:`, error.response?.data, error.message);
             }
             else {
                 console.error(`❌ Unexpected error for ${processedMessage.phoneNumber}:`, error);
@@ -315,7 +315,7 @@ class MessageProcessor {
 async function main() {
     const processor = new MessageProcessor();
     try {
-        await processor.processBatch(1, 150, 30000);
+        await processor.processBatch(1, 150, 35000);
     }
     catch (error) {
         console.error("Application error:", error);

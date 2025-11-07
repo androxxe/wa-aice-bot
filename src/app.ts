@@ -1,7 +1,7 @@
 import fs from "fs"
 import csv from "csv-parser"
 import axios, { AxiosError } from "axios"
-import 'dotenv/config'
+import "dotenv/config"
 
 interface CsvRow {
   Name: string
@@ -29,7 +29,7 @@ class MessageProcessor {
     csvFilePath: string = "./data.csv",
     successLogFilePath: string = "./sent_log.txt",
     errorLogFilePath: string = "./error_log.txt",
-    messageTemplate: string = `Halo bapak / ibu Mitra Aice, saya dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan 9 (September) toko bapak/ibu menerima [2] pcs eskrim crispy balls kemasan baru dalam event coba gratis crispy balls?\nTerimakasih atas konfirmasinya\nHave an aice day! (ya=1, tidak=0)`,
+    messageTemplate: string = `Halo bapak / ibu Mitra Aice [1], saya dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan 9 (September) toko bapak/ibu menerima [2] pcs eskrim crispy balls kemasan baru dalam event coba gratis crispy balls?\nTerimakasih atas konfirmasinya\n\nGarut\nHave an aice day! (ya=1, tidak=0)`,
     apiUrl: string = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
   ) {
     this.csvFilePath = csvFilePath
@@ -185,9 +185,7 @@ class MessageProcessor {
   /**
    * Send message to API
    */
-  private async sendToApi(
-    processedMessage: ProcessedMessage
-  ): Promise<{
+  private async sendToApi(processedMessage: ProcessedMessage): Promise<{
     success: boolean
     statusCode: number
   }> {
@@ -233,7 +231,8 @@ class MessageProcessor {
       if (axios.isAxiosError(error)) {
         console.error(
           `❌ API error for ${processedMessage.phoneNumber}:`,
-          error.response?.data || error.message
+          error.response?.data,
+          error.message
         )
       } else {
         console.error(
@@ -342,7 +341,7 @@ class MessageProcessor {
           )
           successCount++
         } else {
-          if(![502, 503, 504].includes(response.statusCode)) {
+          if (![502, 503, 504].includes(response.statusCode)) {
             errorCount++
             this.logErrorSentPhoneNumber(
               processedMessage.phoneNumber,
@@ -426,7 +425,7 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processBatch(1, 150, 30000)
+    await processor.processBatch(1, 150, 35000)
   } catch (error) {
     console.error("Application error:", error)
     process.exit(1)

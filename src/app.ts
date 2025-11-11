@@ -29,8 +29,8 @@ class MessageProcessor {
     csvFilePath: string = "./data.csv",
     successLogFilePath: string = "./sent_log.txt",
     errorLogFilePath: string = "./error_log.txt",
-    messageTemplate: string = `Halo bapak / ibu Mitra Aice [1], saya dari tim Inspeksi aice pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan 9 (September) toko bapak/ibu menerima [2] pcs eskrim crispy balls kemasan baru dalam event coba gratis crispy balls?\nTerimakasih atas konfirmasinya\n\nGarut\nHave an aice day! (ya=1, tidak=0)`,
-    apiUrl: string = "https://app.wapanels.com/api/create-message" // Replace with your actual API URL
+    messageTemplate: string = `Halo bapak / ibu Mitra Aice Karawang, [1]. saya dari tim Inspeksi AICE pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan September 2025 toko bapak/ibu menerima [2] pcs eskrim Crispy Balls kemasan baru dalam event coba gratis Crispy Balls?\nTerimakasih atas konfirmasinya\n\nHave an aice day!`,
+    apiUrl: string = "http://27.112.79.1:3000/api/sendText" // Replace with your actual API URL
   ) {
     this.csvFilePath = csvFilePath
     this.successLogFilePath = successLogFilePath
@@ -191,10 +191,12 @@ class MessageProcessor {
   }> {
     try {
       const payload = {
-        appkey: process.env.WHATSAPP_APP_KEY,
-        authkey: process.env.WHATSAPP_AUTH_KEY,
-        to: processedMessage.phoneNumber,
-        message: processedMessage.message,
+        chatId: convertToWhatsAppFormatFlexible(processedMessage.phoneNumber),
+        reply_to: null,
+        text: processedMessage.message,
+        linkPreview: false,
+        linkPreviewHighQuality: false,
+        session: 'default'
       }
 
       // Replace with your actual API call
@@ -202,6 +204,7 @@ class MessageProcessor {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          "X-Api-Key": process.env.WHATSAPP_WAHA_API_KEY
         },
         timeout: 10000, // 10 second timeout
       })
@@ -456,3 +459,32 @@ console.log("[WA-AICE] worker is starting", new Date())
 //   console.log('[WA-AICE] worker 08:00 AM starting');
 //   main()
 // });
+
+
+function convertToWhatsAppFormatFlexible(phoneNumber: string): string {
+  // Remove all non-digit characters
+  const digitsOnly = phoneNumber.replace(/\D/g, '');
+  
+  // Handle different starting formats
+  let normalized: string;
+  
+  if (digitsOnly.startsWith('62')) {
+    // Already has country code
+    normalized = digitsOnly;
+  } else if (digitsOnly.startsWith('0')) {
+    // Starts with 0, replace with 62
+    normalized = '62' + digitsOnly.slice(1);
+  } else if (digitsOnly.startsWith('8')) {
+    // Missing leading 0, add 62
+    normalized = '62' + digitsOnly;
+  } else {
+    throw new Error('Invalid phone number format');
+  }
+  
+  // Validate length (Indonesian mobile numbers are typically 11-13 digits with country code)
+  if (normalized.length < 11 || normalized.length > 13) {
+    throw new Error('Invalid phone number length');
+  }
+  
+  return normalized + '@c.us';
+}

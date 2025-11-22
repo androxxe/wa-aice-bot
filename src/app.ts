@@ -20,7 +20,6 @@ class MessageProcessor {
   private successLogFilePath: string
   private errorLogFilePath: string
   private csvFilePath: string
-  private messageTemplate: string
   private apiUrl: string
   private sentPhoneNumbers: Set<string>
   private errorPhoneNumbers: Set<string>
@@ -35,7 +34,6 @@ class MessageProcessor {
     this.csvFilePath = csvFilePath
     this.successLogFilePath = successLogFilePath
     this.errorLogFilePath = errorLogFilePath
-    this.messageTemplate = messageTemplate
     this.apiUrl = apiUrl
     this.sentPhoneNumbers = new Set()
     this.errorPhoneNumbers = new Set()
@@ -105,6 +103,26 @@ class MessageProcessor {
     } catch (error) {
       console.error("❌ Error writing to log file:", error)
     }
+  }
+
+  /**
+   * Get random message template
+   */
+  private getRandomTemplate(): string {
+    const templates = [
+      `Halo bapak / ibu Mitra Aice Serang, [1]. saya dari tim Inspeksi AICE pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan September 2025 toko bapak/ibu menerima [2] pcs eskrim Crispy Balls kemasan baru dalam event coba gratis Crispy Balls?\nTerimakasih atas konfirmasinya\n\nHave an aice day!`,
+      `Halo Bapak/Ibu [1] Mitra Aice Serang, saya dari tim Inspeksi AICE pusat Jakarta ingin konfirmasi\nApakah benar bulan September 2025 toko bapak/ibu menerima [2] pcs eskrim Crispy Balls kemasan baru dalam event coba gratis?\nMohon konfirmasinya ya\n\nHave an aice day!`,
+      `Assalamualaikum Bapak/Ibu [1] Mitra Aice Serang, saya dari tim Inspeksi AICE Jakarta perlu konfirmasi\nApakah betul pada September 2025 toko bapak/ibu mendapat [2] pcs eskrim Crispy Balls kemasan baru untuk event coba gratis Crispy Balls?\nTerima kasih konfirmasinya\n\nHave an aice day!`,
+      `Halo [1] Mitra Aice Serang, saya dari tim Inspeksi AICE pusat di Jakarta ingin memastikan\nApakah benar toko bapak/ibu menerima [2] pcs eskrim Crispy Balls kemasan baru di bulan September 2025 untuk event coba gratis?\nMohon informasinya\n\nHave an aice day!`,
+      `Assalamualaikum Bapak/Ibu [1] Mitra Aice Serang, saya dari tim Inspeksi AICE Jakarta ingin konfirmasi\nApakah toko bapak/ibu benar menerima produk eskrim Crispy Balls kemasan baru sebanyak [2] pcs pada September 2025 dalam program coba gratis?\nDitunggu konfirmasinya\n\nHave an aice day!`,
+      `Halo Bapak/Ibu Mitra Aice Serang [1], saya dari tim Inspeksi AICE pusat Jakarta butuh konfirmasi\nApakah betul di bulan September 2025 toko bapak/ibu sudah menerima [2] pcs Crispy Balls kemasan baru untuk event coba gratis Crispy Balls?\nTerimakasih banyak\n\nHave an aice day!`,
+      `Assalamualaikum Bapak/Ibu [1] Mitra Aice Serang, saya dari tim Inspeksi AICE Jakarta ingin memastikan data\nApakah benar pada bulan September 2025 toko bapak/ibu mendapatkan [2] pcs eskrim Crispy Balls kemasan baru dalam event coba gratis?\nMohon konfirmasi dari bapak/ibu\n\nHave an aice day!`,
+      `Halo [1] Mitra Aice Serang, saya dari tim Inspeksi AICE pusat Jakarta perlu konfirmasi\nBetulkah toko bapak/ibu telah menerima [2] pcs eskrim Crispy Balls kemasan baru untuk event coba gratis di bulan September 2025?\nMohon bantuannya untuk konfirmasi\n\nHave an aice day!`,
+      `Halo Bapak/Ibu [1] Mitra Aice Serang, saya dari tim Inspeksi AICE Jakarta ingin konfirmasi\nApakah benar di September 2025 toko bapak/ibu menerima sejumlah [2] pcs eskrim Crispy Balls kemasan baru dalam program coba gratis Crispy Balls?\nTerima kasih atas perhatiannya\n\nHave an aice day!`,
+      `Halo Bapak/Ibu [1] Mitra Aice Serang, saya dari tim Inspeksi AICE pusat Jakarta mau konfirmasi\nApakah betul toko bapak/ibu sudah menerima [2] pcs eskrim Crispy Balls kemasan baru pada bulan September 2025 untuk event coba gratis?\nDitunggu informasinya\n\nHave an aice day!`,
+    ];
+    
+    return templates[Math.floor(Math.random() * templates.length)];
   }
 
   /**
@@ -252,6 +270,15 @@ class MessageProcessor {
   }
 
   /**
+   * Get random delay between 40 seconds and 1.5 minutes (40000ms to 90000ms)
+   */
+  private getRandomDelay(): number {
+    const minDelay = 40000;
+    const maxDelay = 90000;
+    return Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+  }
+
+  /**
    * Add delay between API calls to avoid rate limiting
    */
   private async delay(ms: number): Promise<void> {
@@ -328,7 +355,7 @@ class MessageProcessor {
           phoneNumber: row["Phone Number"],
           name: row.Name,
           value: row.Value,
-          message: this.parseMessage(this.messageTemplate, row.Name, row.Value),
+          message: this.parseMessage(this.getRandomTemplate(), row.Name, row.Value),
         }
 
         console.log(`💬 Message: "${processedMessage.message}"`)
@@ -355,8 +382,9 @@ class MessageProcessor {
 
         // Add delay between requests (except for the last one)
         if (i < dataToProcess.length - 1) {
-          console.log(`⏳ Waiting ${response.success ? delayMs : 500}ms...`)
-          await this.delay(response.success ? delayMs : 500)
+          const randomDelay = response.success ? this.getRandomDelay() : 500;
+          console.log(`⏳ Waiting ${randomDelay}ms (${(randomDelay / 1000).toFixed(1)}s)...`)
+          await this.delay(randomDelay)
         }
       }
 
@@ -428,7 +456,7 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processBatch(1, 150, 60000)
+    await processor.processBatch(1, 120, 60000)
   } catch (error) {
     console.error("Application error:", error)
     process.exit(1)

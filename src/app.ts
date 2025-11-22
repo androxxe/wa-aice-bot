@@ -28,7 +28,6 @@ class MessageProcessor {
     csvFilePath: string = "./data.csv",
     successLogFilePath: string = "./sent_log.txt",
     errorLogFilePath: string = "./error_log.txt",
-    messageTemplate: string = `Halo bapak / ibu Mitra Aice Serang, [1]. saya dari tim Inspeksi AICE pusat di Jakarta ingin konfirmasi\nApakah benar pada bulan September 2025 toko bapak/ibu menerima [2] pcs eskrim Crispy Balls kemasan baru dalam event coba gratis Crispy Balls?\nTerimakasih atas konfirmasinya\n\nHave an aice day!`,
     apiUrl: string = "http://27.112.79.1:3000/api/sendText" // Replace with your actual API URL
   ) {
     this.csvFilePath = csvFilePath
@@ -289,7 +288,6 @@ class MessageProcessor {
    * Process messages with batching support
    */
   async processMessages(
-    delayMs: number = 1000,
     batchSize?: number,
     startIndex: number = 0
   ): Promise<void> {
@@ -417,11 +415,10 @@ class MessageProcessor {
   async processBatch(
     batchNumber: number,
     batchSize: number = 100,
-    delayMs: number = 1000
   ): Promise<void> {
     const startIndex = (batchNumber - 1) * batchSize
     console.log(`🎯 Processing Batch ${batchNumber} (Size: ${batchSize})`)
-    await this.processMessages(delayMs, batchSize, startIndex)
+    await this.processMessages(batchSize, startIndex)
   }
 
   /**
@@ -456,7 +453,7 @@ async function main() {
   const processor = new MessageProcessor()
 
   try {
-    await processor.processBatch(1, 120, 60000)
+    await processor.processBatch(1, 120)
   } catch (error) {
     console.error("Application error:", error)
     process.exit(1)
